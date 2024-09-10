@@ -11,11 +11,12 @@ SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 660
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-NUM_BOIDS = 60
+NUM_BOIDS = 120
 BOID_COLOR = (200, 50, 200)
 
-AVOIDANCE_FACTOR = 0.001
-ALIGNMENT_FACTOR = 0.05
+AVOIDANCE_FACTOR = 0.005
+ALIGNMENT_FACTOR = 0.04
+COHERENCE_FACTOR = 0.001
 
 # Set the title of the window
 pygame.display.set_caption("Boids")
@@ -23,7 +24,7 @@ pygame.display.set_caption("Boids")
 # Define some colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-BACKGROUND = (35, 35, 36)
+BACKGROUND = (32, 32, 34)
 
 # Set up the clock for controlling the frame rate
 clock = pygame.time.Clock()
@@ -41,11 +42,23 @@ class Vector():
             return Vector(self.x + other.x, self.y + other.y)
         return Vector(self.x + other, self.y + other)
     
+    def __sub__(self, other):
+        otherType = type(other)
+        if otherType == Vector:
+            return Vector(self.x - other.x, self.y - other.y)
+        return Vector(self.x - other, self.y - other)
+    
     def __mul__(self, other):
         otherType = type(other)
         if otherType == Vector:
             return Vector(self.x * other.x, self.y * other.y)
         return Vector(self.x * other, self.y * other)
+    
+    def __truediv__(self, other):
+        otherType = type(other)
+        if otherType == Vector:
+            return Vector(self.x / other.x, self.y / other.y)
+        return Vector(self.x / other, self.y / other)
 
     def Magnitude(self):
         return (self.x**2 + self.y**2)
@@ -63,11 +76,13 @@ class Boid():
         self.velocity = Vector(random.randint(0, 40) - 20, random.randint(0, 40) - 20)
         self.acceleration = Vector(0, 0)
         self.accelerationRate = 0.01
-        self.magnitudeMaxVelocity = 20
+        self.magnitudeMaxVelocity = 30
         self.angle = angle
         self.rotationSpeed = 5
         self.color = BOID_COLOR
-        self.size = 10
+        self.size = 12
+
+        self.returnFactor = 0.2
 
         self.avoidDistance = 40
         self.viewDistance = 100
@@ -83,41 +98,58 @@ class Boid():
 
     def Align(self, other, alignVector: Vector):
         """
-        Sets the alignment vector towards the other boid.
+        Sets the alignment vector towards the heading of the other boid.
         """
         alignVector.x += other.velocity.x
         alignVector.y += other.velocity.y
 
+    def Cohere(self, other, cohereVector: Vector):
+        """
+        Set the coherence factor towards the position of the other boid. 
+        """
+        cohereVector.x += other.position.x
+        cohereVector.y += other.position.y
+
     def Update(self, others: list):
         avoidVector = Vector(0, 0)
         alignVector = Vector(0, 0)
+        cohereVector = Vector(0, 0)
         neighbours = 0  # Number of boids within view
 
         # Find the boids within view
         for other in others:
             distance = self.position.Distance(other.position)
-            if distance < self.viewDistance:
+            if distance < self.viewDistance and other != self:
 
                 # Apply the rules
                 self.Avoid(other, avoidVector, distance)
                 self.Align(other, alignVector)
+                self.Cohere(other, cohereVector)
 
                 # Update number of neighbors
                 neighbours += 1
 
-        # Add the scaled avoidance vector to the acceleration
-        self.acceleration += avoidVector * AVOIDANCE_FACTOR
+        if neighbours > 0:
+            # Average the acumulated alignment and coherence vectors
+            alignVector = alignVector / neighbours
+            cohereVector = cohereVector / neighbours
 
-        # Set the accumulated alignment vector to the
-        # average possition of neighboring boids
-        alignVector.x = alignVector.x / neighbours
-        alignVector.y = alignVector.y / neighbours
-
-        # Add the scaled alignment vector to the acceleration
-        self.acceleration.x += (alignVector.x - self.acceleration.x) * ALIGNMENT_FACTOR
-        self.acceleration.y += (alignVector.y - self.acceleration.y) * ALIGNMENT_FACTOR
+            # Add the scaled avoidance, alignment and coherence vectors to the acceleration
+            self.acceleration += avoidVector * AVOIDANCE_FACTOR
+            self.acceleration += (alignVector - self.acceleration) * ALIGNMENT_FACTOR
+            self.acceleration += (cohereVector - self.position) * COHERENCE_FACTOR
 
     def Move(self):
+        # If boids leave the screen, turn them around
+        if self.position.x < 0:
+            self.acceleration.x += self.returnFactor
+        elif self.position.x > SCREEN_WIDTH:
+            self.acceleration.x -= self.returnFactor
+        if self.position.y < 0:
+            self.acceleration.y += self.returnFactor
+        elif self.position.y > SCREEN_HEIGHT:
+            self.acceleration.y -= self.returnFactor
+
         # Update the velocity based on the acceleration
         self.velocity = self.velocity + self.acceleration
         self.acceleration.x = self.acceleration.y = 0 # Reset acceleration
@@ -132,16 +164,6 @@ class Boid():
 
         # Update position based on velocity
         self.position += self.velocity
-
-        # If boids leave the screen, place them on the other side
-        if self.position.x < 0:
-            self.position.x = SCREEN_WIDTH
-        elif self.position.x > SCREEN_WIDTH:
-            self.position.x = 0
-        if self.position.y < 0:
-            self.position.y = SCREEN_HEIGHT
-        elif self.position.y > SCREEN_HEIGHT:
-            self.position.y = 0
 
     def Draw(self, surface):
         # Rotate each point in the triagle based on the boids direction
