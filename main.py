@@ -7,12 +7,14 @@ import math
 pygame.init()
 
 # Set up the screen dimensions
-SCREEN_WIDTH = 1000
-SCREEN_HEIGHT = 700
+SCREEN_WIDTH = 1200
+SCREEN_HEIGHT = 660
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-NUM_BOIDS = 50
+NUM_BOIDS = 40
 BOID_COLOR = (200, 50, 200)
+
+AVOIDANCE_FACTOR = 0.001
 
 # Set the title of the window
 pygame.display.set_caption("Boids")
@@ -33,54 +35,87 @@ class Vector():
         self.y = y
         
     def __add__(self, other):
-        x = self.x + other.x
-        y = self.y + other.y
-        
-        return Vector(x, y)
+        return Vector(self.x + other.x, self.y + other.y)
+    
+    def __mul__(self, other):
+        otherType = type(other)
+        if otherType == Vector:
+            return Vector(self.x * other.x, self.y * other.y)
+        return Vector(self.x * other, self.y * other)
 
-def Magnitude(vector: Vector):
-    return (vector.x**2 + vector.y**2)
+    def Magnitude(self):
+        return (self.x**2 + self.y**2)
+    
+    def Normalize(self):
+        magnitude = self.Magnitude()
+        return Vector(self.x / magnitude, self.y / magnitude)
+    
+    def Distance(self, other):
+        return math.sqrt((other.x - self.x)**2 + (other.y - self.y)**2)
 
 class Boid():
     def __init__(self, position: Vector, angle: float):
         self.position = position
-        self.velocity = Vector(0, 0)
+        self.velocity = Vector(random.randint(0, 10) * 0.1, random.randint(0, 10) * 0.1)
         self.acceleration = Vector(0, 0)
         self.accelerationRate = 0.01
         self.magnitudeMaxVelocity = 10
         self.angle = angle
         self.rotationSpeed = 5
         self.color = BOID_COLOR
-        self.radius = 5
         self.size = 10
 
+        self.avoidRadius = 60
+        self.attractRadius = 120
+
+    def Avoid(self, others: list):
+        avoidaceVector = Vector(0, 0)
+
+        # Set the avoidance vector direction away
+        # from the collected direction of nearby boids
+        for other in others:
+            distance = self.position.Distance(other.position)
+            if distance < self.avoidRadius:
+                avoidaceVector.x += self.position.x - other.position.x
+                avoidaceVector.y += self.position.y - other.position.y
+
+        # Set the acceleration to the avoidance vector
+        # scaled by the avoidance factor
+        self.acceleration = avoidaceVector * AVOIDANCE_FACTOR
+
     def Move(self):
-        # Convert angle to radians
-        angleRadians = math.radians(self.angle)
-
-        # Calculate the acceleration direction from the angle
-        self.acceleration.x = math.cos(angleRadians) * self.accelerationRate
-        self.acceleration.y = math.sin(angleRadians) * self.accelerationRate
-
         # Update the velocity based on the acceleration
-        # capping the velocity at the max speed
-        if Magnitude(self.velocity) < self.magnitudeMaxVelocity:
-            self.velocity = self.velocity + self.acceleration
+        self.velocity = self.velocity + self.acceleration
+
+        # If the new velocity surpasses the max velocity
+        if self.velocity.Magnitude() > self.magnitudeMaxVelocity:
+            # Set the magnitude of the velocity to the magnitude of the max velocity
+            self.velocity = self.velocity.Normalize() * self.magnitudeMaxVelocity
+
+        # Calculate the direction of the boid is moving
+        self.angle = math.atan2(self.velocity.y, self.velocity.x)
 
         # Update position based on velocity
         self.position += self.velocity
 
-    def Draw(self, surface):
-        # Convert angle to radians
-        angleRadians = math.radians(self.angle)
+        # If boids leave the screen, place them on the other side
+        if self.position.x < 0:
+            self.position.x = SCREEN_WIDTH
+        elif self.position.x > SCREEN_WIDTH:
+            self.position.x = 0
+        if self.position.y < 0:
+            self.position.y = SCREEN_HEIGHT
+        elif self.position.y > SCREEN_HEIGHT:
+            self.position.y = 0
 
+    def Draw(self, surface):
         # Rotate each point in the triagle based on the boids direction
-        tip = (self.position.x + math.cos(angleRadians) * self.size,
-               self.position.y + math.sin(angleRadians) * self.size)
-        left = (self.position.x + math.cos(angleRadians + math.radians(145)) * self.size,
-                self.position.y + math.sin(angleRadians + math.radians(145)) * self.size)
-        right = (self.position.x + math.cos(angleRadians - math.radians(145)) * self.size,
-                 self.position.y + math.sin(angleRadians - math.radians(145)) * self.size)
+        tip = (self.position.x + math.cos(self.angle) * self.size,
+               self.position.y + math.sin(self.angle) * self.size)
+        left = (self.position.x + math.cos(self.angle + math.radians(145)) * self.size,
+                self.position.y + math.sin(self.angle + math.radians(145)) * self.size)
+        right = (self.position.x + math.cos(self.angle - math.radians(145)) * self.size,
+                 self.position.y + math.sin(self.angle - math.radians(145)) * self.size)
 
         # Draw triangle
         pygame.draw.polygon(surface, self.color, [tip, left, right])
@@ -105,6 +140,7 @@ def main():
         screen.fill(BACKGROUND)  # Clear the screen
 
         for boid in boids:
+            boid.Avoid(boids)
             boid.Move()
             boid.Draw(screen)
 
