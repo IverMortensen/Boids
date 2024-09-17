@@ -1,12 +1,16 @@
-""" Window settings """
+""" Window Settings """
 SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 660
 BACKGROUND = (32, 32, 34)
 
-""" Boids settings """
+""" Boids Settings """
 NUMBER_OF_BOIDS = 120
 BOID_COLOR = (200, 50, 200)
 
 AVOIDANCE_FACTOR = 0.005
 ALIGNMENT_FACTOR = 0.04
 COHERENCE_FACTOR = 0.001
+
+""" Quad Tree Settings """
+QUAD_MIN_WIDTH = 50
+DRAW_QUADTREE = True

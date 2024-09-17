@@ -4,6 +4,7 @@ import random
 import math
 import settings
 from vector import Vector
+from quadtree import QuadNode, Point
 
 # Initialize Pygame
 pygame.init()
@@ -70,7 +71,7 @@ class Boid():
         cohereVector.x += other.position.x
         cohereVector.y += other.position.y
 
-    def Update(self, others: list):
+    def UpdateAcceleration(self, others: list):
         avoidVector = Vector(0, 0)
         alignVector = Vector(0, 0)
         cohereVector = Vector(0, 0)
@@ -89,6 +90,8 @@ class Boid():
                 # Update number of neighbors
                 neighbours += 1
 
+        # If the boid had any neighbours
+        # update its acceleration based on the applied rules
         if neighbours > 0:
             # Average the acumulated alignment and coherence vectors
             alignVector = alignVector / neighbours
@@ -98,9 +101,8 @@ class Boid():
             self.acceleration += avoidVector * AVOIDANCE_FACTOR
             self.acceleration += (alignVector - self.acceleration) * ALIGNMENT_FACTOR
             self.acceleration += (cohereVector - self.position) * COHERENCE_FACTOR
-
-    def Move(self):
-        # If boids leave the screen, turn them around
+        
+        # If boids leave the screen, apply an acceleration towards the screen
         if self.position.x < 0:
             self.acceleration.x += self.returnFactor
         elif self.position.x > SCREEN_WIDTH:
@@ -110,6 +112,7 @@ class Boid():
         elif self.position.y > SCREEN_HEIGHT:
             self.acceleration.y -= self.returnFactor
 
+    def Move(self):
         # Update the velocity based on the acceleration
         self.velocity = self.velocity + self.acceleration
         self.acceleration.x = self.acceleration.y = 0 # Reset acceleration
@@ -154,14 +157,21 @@ def main():
                 if event.key == pygame.K_ESCAPE:  # Quit the game on pressing ESC
                     running = False
 
-        screen.fill(BACKGROUND)  # Clear the screen
+        # Clear the screen
+        screen.fill(BACKGROUND)
 
+        # Create the root node of the quadtree
+        quad = QuadNode(Vector(0,0), SCREEN_HEIGHT, SCREEN_WIDTH, screen)
+
+        # Handle all boids
         for boid in boids:
-            boid.Update(boids)
-            boid.Move()
-            boid.Draw(screen)
+            quad.InsertPoint(Point(boid.position))  # Insert boid in quadtree
+            boid.UpdateAcceleration(boids)          # Update boids acceleration
+            boid.Move()                             # Move boid baised on acceleration
+            boid.Draw(screen)                       # Draw boid to screen
 
-        pygame.display.flip()  # Update the display
+        # Update the display
+        pygame.display.flip()
 
         # Cap the frame rate at 60 FPS
         clock.tick(FPS)
