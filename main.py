@@ -2,73 +2,33 @@ import pygame
 import sys
 import random
 import math
+import settings
+from vector import Vector
 
 # Initialize Pygame
 pygame.init()
 
-# Set up the screen dimensions
-SCREEN_WIDTH = 1200
-SCREEN_HEIGHT = 660
+# Get the settings from the settings file
+SCREEN_WIDTH = settings.SCREEN_WIDTH
+SCREEN_HEIGHT = settings.SCREEN_HEIGHT
+BACKGROUND = settings.BACKGROUND
+
+NUM_BOIDS = settings.NUMBER_OF_BOIDS
+BOID_COLOR = settings.BOID_COLOR
+
+AVOIDANCE_FACTOR = settings.AVOIDANCE_FACTOR
+ALIGNMENT_FACTOR = settings.ALIGNMENT_FACTOR
+COHERENCE_FACTOR = settings.COHERENCE_FACTOR
+
+# Set up the screen
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-
-NUM_BOIDS = 120
-BOID_COLOR = (200, 50, 200)
-
-AVOIDANCE_FACTOR = 0.005
-ALIGNMENT_FACTOR = 0.04
-COHERENCE_FACTOR = 0.001
 
 # Set the title of the window
 pygame.display.set_caption("Boids")
 
-# Define some colors
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-BACKGROUND = (32, 32, 34)
-
 # Set up the clock for controlling the frame rate
 clock = pygame.time.Clock()
 FPS = 60
-
-
-class Vector():
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        
-    def __add__(self, other):
-        otherType = type(other)
-        if otherType == Vector:
-            return Vector(self.x + other.x, self.y + other.y)
-        return Vector(self.x + other, self.y + other)
-    
-    def __sub__(self, other):
-        otherType = type(other)
-        if otherType == Vector:
-            return Vector(self.x - other.x, self.y - other.y)
-        return Vector(self.x - other, self.y - other)
-    
-    def __mul__(self, other):
-        otherType = type(other)
-        if otherType == Vector:
-            return Vector(self.x * other.x, self.y * other.y)
-        return Vector(self.x * other, self.y * other)
-    
-    def __truediv__(self, other):
-        otherType = type(other)
-        if otherType == Vector:
-            return Vector(self.x / other.x, self.y / other.y)
-        return Vector(self.x / other, self.y / other)
-
-    def Magnitude(self):
-        return (self.x**2 + self.y**2)
-    
-    def Normalize(self):
-        magnitude = self.Magnitude()
-        return Vector(self.x / magnitude, self.y / magnitude)
-    
-    def Distance(self, other):
-        return math.sqrt((other.x - self.x)**2 + (other.y - self.y)**2)
 
 class Boid():
     def __init__(self, position: Vector, angle: float):
