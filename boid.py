@@ -1,25 +1,21 @@
-from settings import BOID_COLOR, AVOIDANCE_FACTOR, ALIGNMENT_FACTOR, COHERENCE_FACTOR, SCREEN_HEIGHT, SCREEN_WIDTH
+from settings import BOID_COLOR, BOID_SIZE, AVOIDANCE_FACTOR, ALIGNMENT_FACTOR, COHERENCE_FACTOR, SCREEN_HEIGHT, SCREEN_WIDTH
 from vector import Vector
-import random
 import math
 import pygame
 
 class Boid():
-    def __init__(self, position: Vector, velocity: Vector, angle: float):
+    def __init__(self, position: Vector, velocity: Vector, angle: float, color=BOID_COLOR):
         self.position = position
         self.velocity = velocity
         self.acceleration = Vector(0, 0)
-        self.accelerationRate = 0.01
-        self.magnitudeMaxVelocity = 30
+        self.magnitudeMaxVelocity = 3 * BOID_SIZE
         self.angle = angle
-        self.rotationSpeed = 5
-        self.color = BOID_COLOR
-        self.size = 12
 
+        self.color = color
+        self.size = BOID_SIZE
         self.returnFactor = 0.2
-
-        self.avoidDistance = 40
-        self.viewDistance = 100
+        self.avoidDistance = 2.2 * BOID_SIZE
+        self.viewDistance = 6.0 * BOID_SIZE
 
     def Avoid(self, other, avoidVector: Vector, distance):
         """
