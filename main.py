@@ -47,10 +47,16 @@ def main():
 
         # Handle all boids
         for boid in boids:
+            # Find nearby boids in the quadtree
             points = SearchArea(quad, boid.position, boid.viewDistance/2)
             if points:
-                boidsInRange = [point.data for point in points]
-            boid.UpdateAcceleration(boidsInRange)          # Update boids acceleration
+                # If alot of boids are nearby, limit the amout of boids checked.
+                # Take from end and beginning of list for a better distribution.
+                if len(points) > 12:
+                    points = points[-6:6]
+                nearbyBoids = [point.data for point in points]
+
+            boid.UpdateAcceleration(nearbyBoids)          # Update boids acceleration
             boid.Move()                             # Move boid baised on acceleration
             boid.Draw(screen)                       # Draw boid to screen
 

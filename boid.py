@@ -2,21 +2,20 @@ from settings import BOID_COLOR, BOID_SIZE, AVOIDANCE_FACTOR, ALIGNMENT_FACTOR, 
 from vector import Vector
 import math
 import pygame
-import random
 
 class Boid():
     def __init__(self, position: Vector, velocity: Vector, angle: float, color=BOID_COLOR):
         self.position = position
         self.velocity = velocity
         self.acceleration = Vector(0, 0)
-        self.magnitudeMaxVelocity = 3 * BOID_SIZE
+        self.magnitudeMaxVelocity = 2 * BOID_SIZE
         self.angle = angle
 
         self.color = color
         self.size = BOID_SIZE
-        self.returnFactor = 0.2
+        self.returnFactor = 0.15
         self.avoidDistance = 2.2 * BOID_SIZE
-        self.viewDistance = 9.0 * BOID_SIZE
+        self.viewDistance = 12.0 * BOID_SIZE
 
     def Avoid(self, other, avoidVector: Vector, distance):
         """
@@ -46,7 +45,7 @@ class Boid():
         alignVector = Vector(0, 0)
         cohereVector = Vector(0, 0)
         neighbours = 0  # Number of boids within view
-
+        
         # Find the boids within view
         for other in others:
             distance = self.position.Distance(other.position)
@@ -60,10 +59,7 @@ class Boid():
                 # Update number of neighbors
                 neighbours += 1
 
-                if neighbours > 12:
-                    break
-
-        # If the boid had any neighbours
+        # If the boid has any neighbours
         # update its acceleration based on the applied rules
         if neighbours > 0:
             # Average the acumulated alignment and coherence vectors
