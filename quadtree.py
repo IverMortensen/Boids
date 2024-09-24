@@ -137,3 +137,53 @@ class QuadNode():
                position.y >= self.position.y + (self.height / 2) and\
                position.x <= self.position.x + self.width and\
                position.y <= self.position.y + self.height
+
+def Intersect(positionA: Vector, heightA, widhtA, positionB: Vector, heightB, widhtB):
+    """ Checks if two boxes intersect. """
+    x1Min, y1Min = positionA.x, positionA.y
+    x1Max, y1Max = positionA.x + widhtA, positionA.y + heightA
+    x2Min, y2Min = positionB.x, positionB.y
+    x2Max, y2Max = positionB.x + widhtB, positionB.y + heightB
+
+    if x1Max < x2Min or x2Max < x1Min:
+        return False
+    if y1Max < y2Min or y2Max < y1Min:
+        return False
+    
+    return True
+
+def SearchArea(node: QuadNode, position: Vector, radius):
+    """
+    Recursively searches a quadtree and finds all leaf nodes within an area.
+    Returns all points contaied in the leaf nodes.
+    """
+    # Ignore node if it doesn't intersect with the search area
+    if not Intersect(node.position, node.height, node.width, position - radius, radius*2, radius*2):
+        return
+    
+    # If the node is a leaf node, return its points
+    if len(node.points):
+        return node.points
+    result = []
+
+    # If the node isn't a leaf node, check its children
+    # and combine the results form its children
+    if node.topLeft:
+        topLeftResult = SearchArea(node.topLeft, position, radius)
+        if topLeftResult:
+            result += topLeftResult
+    if node.topRight:
+        topRightResult = SearchArea(node.topRight, position, radius)
+        if topRightResult:
+            result += topRightResult
+    if node.bottomLeft:
+        bottomLeftResult = SearchArea(node.bottomLeft, position, radius)
+        if bottomLeftResult:
+            result += bottomLeftResult
+    if node.bottomRight: 
+        bottomRightResult = SearchArea(node.bottomRight, position, radius)
+        if bottomRightResult:
+            result += bottomRightResult
+    
+    return result
+
