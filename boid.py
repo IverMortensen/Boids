@@ -15,7 +15,7 @@ class Boid():
         self.size = BOID_SIZE
         self.returnFactor = 0.2
         self.avoidDistance = 2.2 * BOID_SIZE
-        self.viewDistance = 6.0 * BOID_SIZE
+        self.viewDistance = 9.0 * BOID_SIZE
 
     def Avoid(self, other, avoidVector: Vector, distance):
         """
@@ -47,7 +47,9 @@ class Boid():
         neighbours = 0  # Number of boids within view
 
         # Find the boids within view
-        for other in others:
+        for index, other in enumerate(others):
+            if index % 2:
+                continue
             distance = self.position.Distance(other.position)
             if distance < self.viewDistance and other != self:
 
@@ -76,7 +78,7 @@ class Boid():
             self.acceleration.x += self.returnFactor
         elif self.position.x > SCREEN_WIDTH:
             self.acceleration.x -= self.returnFactor
-        if self.position.y < 0:
+        elif self.position.y < 0:
             self.acceleration.y += self.returnFactor
         elif self.position.y > SCREEN_HEIGHT:
             self.acceleration.y -= self.returnFactor
@@ -101,10 +103,10 @@ class Boid():
         # Rotate each point in the triagle based on the boids direction
         tip = (self.position.x + math.cos(self.angle) * self.size,
                self.position.y + math.sin(self.angle) * self.size)
-        left = (self.position.x + math.cos(self.angle + math.radians(145)) * self.size,
-                self.position.y + math.sin(self.angle + math.radians(145)) * self.size)
-        right = (self.position.x + math.cos(self.angle - math.radians(145)) * self.size,
-                 self.position.y + math.sin(self.angle - math.radians(145)) * self.size)
+        left = (self.position.x + math.cos(self.angle + 2.53) * self.size,
+                self.position.y + math.sin(self.angle + 2.53) * self.size)
+        right = (self.position.x + math.cos(self.angle - 2.53) * self.size,
+                 self.position.y + math.sin(self.angle - 2.53) * self.size)
 
         # Draw triangle
         pygame.draw.polygon(surface, self.color, [tip, left, right])
