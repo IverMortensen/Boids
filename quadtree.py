@@ -36,7 +36,7 @@ class QuadNode():
     def DrawQuad(self):
         """ Draws the quad to the screen. """
         if DRAW_QUADTREE:
-            pygame.draw.rect(self.screen, (255,255,255), (self.position.x, self.position.y, self.width, self.height), 1)
+            pygame.draw.rect(self.screen, (38, 38, 40), (self.position.x, self.position.y, self.width, self.height), 1)
 
     def InsertPoint(self, newPoint:Point):
         """

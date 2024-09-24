@@ -15,7 +15,7 @@ class Boid():
         self.size = BOID_SIZE
         self.returnFactor = 0.15
         self.avoidDistance = 2.2 * BOID_SIZE
-        self.viewDistance = 12.0 * BOID_SIZE
+        self.viewDistance = 10.0 * BOID_SIZE
 
     def Avoid(self, other, avoidVector: Vector, distance):
         """
