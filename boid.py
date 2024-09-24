@@ -2,6 +2,7 @@ from settings import BOID_COLOR, BOID_SIZE, AVOIDANCE_FACTOR, ALIGNMENT_FACTOR, 
 from vector import Vector
 import math
 import pygame
+import random
 
 class Boid():
     def __init__(self, position: Vector, velocity: Vector, angle: float, color=BOID_COLOR):
@@ -47,9 +48,7 @@ class Boid():
         neighbours = 0  # Number of boids within view
 
         # Find the boids within view
-        for index, other in enumerate(others):
-            if index % 2:
-                continue
+        for other in others:
             distance = self.position.Distance(other.position)
             if distance < self.viewDistance and other != self:
 
@@ -60,6 +59,9 @@ class Boid():
 
                 # Update number of neighbors
                 neighbours += 1
+
+                if neighbours > 12:
+                    break
 
         # If the boid had any neighbours
         # update its acceleration based on the applied rules
