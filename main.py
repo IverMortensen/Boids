@@ -1,7 +1,7 @@
 from boid import Boid
 from vector import Vector
-from quadtree import QuadNode, Point
-from settings import SCREEN_WIDTH, SCREEN_HEIGHT, BACKGROUND, NUMBER_OF_BOIDS
+from quadtree import QuadNode, Point, SearchArea
+from settings import SCREEN_WIDTH, SCREEN_HEIGHT, BACKGROUND, NUMBER_OF_BOIDS, SHOW_FPS
 import pygame
 import sys
 import random
@@ -13,6 +13,7 @@ def main():
     # Set up the screen
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Boids")
+    font = pygame.font.SysFont(None, 30)
 
     # Set up the clock for controlling the frame rate
     clock = pygame.time.Clock()
@@ -39,15 +40,25 @@ def main():
         # Clear the screen
         screen.fill(BACKGROUND)
 
-        # Create the root node of the quadtree
+        # Create the root node of the quadtree and insert boids
         quad = QuadNode(Vector(0,0), SCREEN_HEIGHT, SCREEN_WIDTH, screen)
+        for boid in boids:
+            quad.InsertPoint(Point(boid.position, boid))
 
         # Handle all boids
         for boid in boids:
-            quad.InsertPoint(Point(boid.position))  # Insert boid in quadtree
-            boid.UpdateAcceleration(boids)          # Update boids acceleration
+            points = SearchArea(quad, boid.position, boid.viewDistance/2)
+            if points:
+                boidsInRange = [point.data for point in points]
+            boid.UpdateAcceleration(boidsInRange)          # Update boids acceleration
             boid.Move()                             # Move boid baised on acceleration
             boid.Draw(screen)                       # Draw boid to screen
+
+        # Render the FPS
+        if SHOW_FPS:
+            fps = clock.get_fps()
+            fps_text = font.render(f"FPS: {int(fps)}", True, (255, 255, 255))
+            screen.blit(fps_text, (10, 10))
 
         # Update the display
         pygame.display.flip()
